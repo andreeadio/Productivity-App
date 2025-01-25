@@ -4,6 +4,9 @@
       <ul>
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/login">Login</router-link></li>
+        <li><router-link to="/register">Register</router-link></li>
+        <li><router-link to="/dashboard">Dashboard</router-link></li>
+        <button @click="handleSignOut" v-if="isLoggedIn" > Sign out</button>
       </ul>
     </nav>
     <router-view></router-view>
@@ -11,9 +14,33 @@
 </template>
 
 <script>
+import { onMounted,ref } from 'vue';
+import {auth} from './config/firebase-config'
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import router from './router';
 
 export default {
-  name: 'App',
+  setup(){
+
+    const isLoggedIn = ref(false)
+
+    onMounted(() => {
+      onAuthStateChanged(auth, (user) =>{
+        if(user) {
+          isLoggedIn.value=true
+        }
+        else{
+          isLoggedIn.value=false
+        }
+      })
+    })
+    const handleSignOut= ()=>{
+      signOut(auth).then(()=>{router.push('/')})
+      
+    }
+
+    return{isLoggedIn, handleSignOut}
+  }
 
 }
 </script>
