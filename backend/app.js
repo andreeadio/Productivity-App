@@ -1,12 +1,14 @@
 require('dotenv').config()
-
 const db = require("./db-config/firebaseConfig");
-
 const cors = require("cors")
 const bodyParser = require('body-parser');
+const express = require('express');
+const authenticate = require('./middlewares/authMiddleware');
 
-const express = require('express')
 const app = express()
+
+app.use(authenticate)
+
 app.use(cors())
 app.use(bodyParser.json());
 
