@@ -1,16 +1,42 @@
+
 <template>
-    <div>
-        <h1>Login </h1>
-        <input v-model="email" type="email" placeholder="Email" />
-        <input v-model="password" type="password" placeholder="Password" />
-        <p v-if="errorMessage">{{ errorMessage }}</p>
-        <button @click="loginUser">Login</button>
-        <button @click="loginWithGoogle"> Login with Google</button>
-        <!-- <button @click="loginWithFacebook">Login with Facebook</button> -->
-
-    </div>
+    <v-container class="d-flex justify-center align-center" style="height: 100vh;">
+      <v-card class="pa-6" max-width="400">
+        <v-card-title class="text-h5 text-center">Login</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="email"
+            label="Email"
+            type="email"
+            placeholder="Enter your email"
+            variant="outlined"
+            prepend-inner-icon="mdi-email"
+          ></v-text-field>
+  
+          <v-text-field
+            v-model="password"
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            variant="outlined"
+            prepend-inner-icon="mdi-lock"
+          ></v-text-field>
+  
+          <v-alert v-if="errorMessage" type="error" dense>{{ errorMessage }}</v-alert>
+  
+          <v-btn color="primary" block class="mt-4" @click="loginUser">Login</v-btn>
+  
+          <v-divider class="my-4"></v-divider>
+  
+          <v-btn color="red darken-1" block @click="loginWithGoogle">
+            <v-icon left>mdi-google</v-icon>
+            Login with Google
+          </v-btn>
+        </v-card-text>
+      </v-card>
+    </v-container>
 </template>
-
+  
 <script>
 
 //imports here
@@ -89,3 +115,9 @@ export default {
 
 };
 </script>
+
+<style scoped>
+.v-card {
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+</style>
