@@ -1,17 +1,26 @@
 <template>
-  <div id="app">
-    <nav>
-      <ul>
-        <li><router-link to="/">Home</router-link></li>
-        <li><router-link to="/login">Login</router-link></li>
-        <li><router-link to="/register">Register</router-link></li>
-        <li><router-link to="/dashboard">Dashboard</router-link></li>
-        <button @click="handleSignOut" v-if="isLoggedIn" > Sign out</button>
-      </ul>
-    </nav>
-    <router-view></router-view>
-  </div>
+  <v-app>
+    <v-app-bar app color="primary" dark>
+      <v-toolbar-title>Productivity App</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn text to="/">Home</v-btn>
+      <v-btn text to="/login">Login</v-btn>
+      <v-btn text to="/register">Register</v-btn>
+      <v-btn text to="/dashboard">Dashboard</v-btn>
+      <v-btn v-if="isLoggedIn" color="secondary" @click="handleSignOut">Sign out</v-btn>
+    </v-app-bar>
+
+    <v-main>
+      <v-container>
+        <router-view></router-view>
+      </v-container>
+    </v-main>
+
+    <v-footer app color="grey darken-4" class="white--text text-center">
+    </v-footer>
+  </v-app>
 </template>
+
 
 <script>
 import { onMounted,ref } from 'vue';
@@ -45,34 +54,6 @@ export default {
 }
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
 
-nav ul {
-  list-style-type: none;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0;
-}
 
-nav ul li {
-  margin: 0;
-}
 
-a {
-  text-decoration: none;
-  color: #42b983;
-}
-
-a:hover {
-  color: #2c3e50;
-}
-</style>
