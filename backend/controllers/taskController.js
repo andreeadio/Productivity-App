@@ -49,9 +49,6 @@ const updateTask = async (req, res) => {
             return res.status(400).json({ error: 'Invalid data. Check title, due date, and status.' });
         }
 
-
-
-
         const taskRef = db.collection('tasks').doc(id);
         const taskSnapshot = await taskRef.get();
 
