@@ -7,7 +7,8 @@ import Home from '../views/HomePage.vue'
 import LoginPage from '../views/LoginPage.vue'
 import MainPage from '../views/MainPage.vue'
 import RegisterPage from '@/views/RegisterPage.vue'
-import { meta } from '@babel/eslint-parser'
+import NotesTaskUI from '@/views/NotesTaskUI.vue'
+import TaskBoard from '@/components/TaskBoard.vue'
 
 
 const routes = [
@@ -21,7 +22,20 @@ const routes = [
             requiresAuth: true
         },
     },
-
+    {
+        path: '/planner',
+        name: 'Planner', component: NotesTaskUI,
+        meta: {
+            requiresAuth: true
+        },
+    },
+    {
+        path: '/taskboard',
+        name: 'Task Board', component: TaskBoard,
+        meta: {
+            requiresAuth: true
+        },
+    },
 ]
 
 
@@ -45,17 +59,22 @@ const getCurrentUser = () => {
 router.beforeEach(async (to, from, next) => {
 
     if (to.matched.some((record) => record.meta.requiresAuth)) {
-        next()
-        if (await getCurrentUser) {
-            next()
+        const user = await getCurrentUser();
+        if (user) {
+            next();
+        } else {
+            alert("You don't have permission!");
+            next("/login");
         }
-        else {
-            alert("You don't have permission!")
-            next("/")
+    } else if (to.matched.some((record) => record.meta.requiresGuest)) {
+        const user = await getCurrentUser();
+        if (user) {
+            next("/dashboard");
+        } else {
+            next();
         }
-    }
-    else {
-        next()
+    } else {
+        next();
     }
 })
 export default router

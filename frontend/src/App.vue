@@ -7,6 +7,9 @@
       <v-btn text to="/login">Login</v-btn>
       <v-btn text to="/register">Register</v-btn>
       <v-btn text to="/dashboard">Dashboard</v-btn>
+      <v-btn text to="/planner">Planner</v-btn>
+      <v-btn text to="/taskboard">Task Board</v-btn>
+
       <v-btn v-if="isLoggedIn" color="secondary" @click="handleSignOut">Sign out</v-btn>
     </v-app-bar>
 
