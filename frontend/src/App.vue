@@ -7,7 +7,6 @@
       <v-btn text to="/login" v-if="!isAuthenticated">Login</v-btn>
       <v-btn text to="/register" v-if="!isAuthenticated">Register</v-btn>
       <v-btn text to="/dashboard" v-if="isAuthenticated">Dashboard</v-btn>
-      <v-btn text to="/planner" v-if="isAuthenticated">Planner</v-btn>
       <v-btn text to="/taskboard" v-if="isAuthenticated">Task Board</v-btn>
 
       <v-btn v-if="isAuthenticated" color="secondary" @click="handleSignOut">Sign out</v-btn>
