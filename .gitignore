@@ -4,3 +4,7 @@ notes.md
 .env
 productivity-app-604b5-firebase-adminsdk-nt088-7e9f09e8ee.json
 frontend/src/config/firebase-config
+frontend/jsconfig.json
+frontend/src/config/firebase-config.js
+backend/generateFakeData.js
+backend/testFirebase.js

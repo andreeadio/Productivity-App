@@ -13,4 +13,6 @@ const vuetify = createVuetify({
     directives,
 })
 
+store.dispatch("auth/autoLogin");
+
 createApp(App).use(router).use(store).use(vuetify).mount('#app')
