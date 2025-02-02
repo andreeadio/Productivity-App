@@ -4,13 +4,13 @@
       <v-toolbar-title>Productivity App</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text to="/">Home</v-btn>
-      <v-btn text to="/login">Login</v-btn>
-      <v-btn text to="/register">Register</v-btn>
-      <v-btn text to="/dashboard">Dashboard</v-btn>
-      <v-btn text to="/planner">Planner</v-btn>
-      <v-btn text to="/taskboard">Task Board</v-btn>
+      <v-btn text to="/login" v-if="!isAuthenticated">Login</v-btn>
+      <v-btn text to="/register" v-if="!isAuthenticated">Register</v-btn>
+      <v-btn text to="/dashboard" v-if="isAuthenticated">Dashboard</v-btn>
+      <v-btn text to="/planner" v-if="isAuthenticated">Planner</v-btn>
+      <v-btn text to="/taskboard" v-if="isAuthenticated">Task Board</v-btn>
 
-      <v-btn v-if="isLoggedIn" color="secondary" @click="handleSignOut">Sign out</v-btn>
+      <v-btn v-if="isAuthenticated" color="secondary" @click="handleSignOut">Sign out</v-btn>
     </v-app-bar>
 
     <v-main>
@@ -26,34 +26,25 @@
 
 
 <script>
-import { onMounted,ref } from 'vue';
-import {auth} from './config/firebase-config'
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import router from './router';
+import { computed } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
   setup(){
 
-    const isLoggedIn = ref(false)
+    const store = useStore()
+    const router = useRouter()
 
-    onMounted(() => {
-      onAuthStateChanged(auth, (user) =>{
-        if(user) {
-          isLoggedIn.value=true
-        }
-        else{
-          isLoggedIn.value=false
-        }
-      })
-    })
-    const handleSignOut= ()=>{
-      signOut(auth).then(()=>{router.push('/')})
-      
-    }
+    const isAuthenticated = computed(() => store.getters["auth/isAuthenticated"])
 
-    return{isLoggedIn, handleSignOut}
+    const handleSignOut = async () => {
+      await store.dispatch("auth/logout")
+      router.push("/")
+    };
+
+    return { isAuthenticated, handleSignOut };
   }
-
 }
 </script>
 
