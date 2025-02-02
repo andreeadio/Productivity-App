@@ -1,54 +1,88 @@
 <template>
-    <div>
-        <h1>Register </h1>
-        <input v-model="email" type="email" placeholder="Email" />
-        <input v-model="password" type="password" placeholder="Password" />
-        <button @click="registerUser">Create account</button>
-        <button @click="signinWithGoogle"> Login with Google</button>
+    <v-container class="d-flex justify-center align-center" style="height: 100vh;">
+        <v-card class="pa-6" max-width="400">
+            <v-card-title class="text-h5 text-center">Register</v-card-title>
+            <v-card-text>
+                <v-form ref="registerForm">
+                    <v-text-field v-model="email" label="Email" type="email" placeholder="Enter your email"
+                        variant="outlined" prepend-inner-icon="mdi-email"
+                        :rules="[rules.required, rules.validEmail]"></v-text-field>
 
-    </div>
+                    <v-text-field v-model="password" label="Password" type="password" placeholder="Enter your password"
+                        variant="outlined" prepend-inner-icon="mdi-lock" :rules="[rules.required, rules.minLength]"
+                        ></v-text-field>
+
+                    <v-alert v-if="errorMessage" type="error" dense>{{ errorMessage }}</v-alert>
+
+                    <v-btn color="primary" block class="mt-4" @click="registerUser">Register</v-btn>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <v-btn color="red darken-1" block @click="registerWithGoogle">
+                        <v-icon left>mdi-google</v-icon>
+                        Register with Google
+                    </v-btn>
+                </v-form>
+            </v-card-text>
+        </v-card>
+    </v-container>
 </template>
 
+
 <script>
-import {ref} from "vue"
-import {auth, googleProvider} from '../config/firebase-config'
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { ref } from "vue"
 import { useRouter } from "vue-router";
+import { useStore } from "vuex";
 
-    export default{
-        setup(){
-            const router = useRouter()
-            const email = ref("")
-            const password = ref("")
+export default {
+    setup() {
+        const router = useRouter()
+        const email = ref("")
+        const password = ref("")
+        const errorMessage = ref("")
+        const store = useStore()
+        const registerForm = ref(null)
 
-            const registerUser = async() => {
-                try{
-                    const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value)
-                    const idToken = await userCredential.user.getIdToken()
-                    localStorage.setItem("token", idToken)
-                    alert("Register successsful")
-                    console.log( auth.currentUser)
-                    router.push('/dashboard')
-                } 
-                catch (error) {
-                    console.error("Login error:", error);
-                }
-            };
+        const rules = {
+            required: (value) => !!value || "This field is required",
+            validEmail: (value) => /.+@.+\..+/.test(value) || "Invalid email format",
+            minLength: (value) => value.length >= 6 || "Password must be at least 6 characters"
+        };
 
-            const signinWithGoogle = async() =>{
-                try{
-                    const result = await signInWithPopup(auth, googleProvider)
-                    const token = await result.user.getIdToken()
-                    localStorage.setItem("token", token)
-                    console.log("Login with google")
-                    router.push("/dashboard")
-                } catch(error){
-                    console.error("Google sign-in error:", error);
-                }
+        const registerUser = async () => {
+            const isValid = await registerForm.value.validate()
+            if (!isValid)
+                return
+
+            try {
+                await store.dispatch("auth/register", { email: email.value, password: password.value })
+                router.push('/dashboard')
             }
+            catch (error) {
+                errorMessage.value = "Registration failed. Please try again."
 
-            return{email, password,registerUser, signinWithGoogle}
+                console.error("Register error:", error)
+            }
+        };
+
+        const registerWithGoogle = async () => {
+            try {
+                await store.dispatch("auth/registerWithGoogle")
+                router.push("/dashboard")
+            } catch (error) {
+                errorMessage.value = "Google registration failed.";
+                console.error("Google sign-in error:", error)
+            }
         }
+
+        return { email, password, registerUser, registerWithGoogle, errorMessage, rules, registerForm }
     }
-    
+}
+
 </script>
+
+<style scoped>
+.v-card {
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+</style>

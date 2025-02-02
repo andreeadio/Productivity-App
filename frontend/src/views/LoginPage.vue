@@ -1,117 +1,91 @@
-
 <template>
-    <v-container class="d-flex justify-center align-center" style="height: 100vh;">
-      <v-card class="pa-6" max-width="400">
-        <v-card-title class="text-h5 text-center">Login</v-card-title>
-        <v-card-text>
-          <v-text-field
-            v-model="email"
-            label="Email"
-            type="email"
-            placeholder="Enter your email"
-            variant="outlined"
-            prepend-inner-icon="mdi-email"
-          ></v-text-field>
-  
-          <v-text-field
-            v-model="password"
-            label="Password"
-            type="password"
-            placeholder="Enter your password"
-            variant="outlined"
-            prepend-inner-icon="mdi-lock"
-          ></v-text-field>
-  
+  <v-container class="d-flex justify-center align-center" style="height: 100vh;">
+    <v-card class="pa-6" max-width="400">
+      <v-card-title class="text-h5 text-center">Login</v-card-title>
+      <v-card-text>
+        <v-form ref="loginForm">
+          <v-text-field v-model="email" label="Email" type="email" placeholder="Enter your email" variant="outlined"
+            prepend-inner-icon="mdi-email" :rules="[rules.required, rules.validEmail]"
+           ></v-text-field>
+
+          <v-text-field v-model="password" label="Password" type="password" placeholder="Enter your password"
+            variant="outlined" prepend-inner-icon="mdi-lock"  :rules="[rules.required, rules.minLength]"
+            ></v-text-field>
+
           <v-alert v-if="errorMessage" type="error" dense>{{ errorMessage }}</v-alert>
-  
+
           <v-btn color="primary" block class="mt-4" @click="loginUser">Login</v-btn>
-  
+
           <v-divider class="my-4"></v-divider>
-  
+
           <v-btn color="red darken-1" block @click="loginWithGoogle">
             <v-icon left>mdi-google</v-icon>
             Login with Google
           </v-btn>
-        </v-card-text>
-      </v-card>
-    </v-container>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
-  
+
 <script>
 
 //imports here
-import {ref} from "vue"
-import {auth, googleProvider} from '../config/firebase-config'
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { useRouter } from "vue-router";
+import { ref } from "vue"
+import { useRouter } from "vue-router"
+import { useStore } from "vuex"
 
 export default {
-    name: "LoginPage", // Schimbare la un nume multi-word
+  name: "LoginPage",
 
-    setup(){
-        const email = ref("")
-        const password = ref("")
-        const errorMessage =ref()
-        const router = useRouter()
+  setup() {
+    const email = ref("")
+    const password = ref("")
+    const errorMessage = ref()
+    const router = useRouter()
+    const store = useStore()
 
-        const loginUser = async() => {
-            try{
-                const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
-                const idToken = await userCredential.user.getIdToken()
-                localStorage.setItem("token", idToken)
-                alert("Login successsful")
-                console.log(auth.currentUser)
-                router.push('/dashboard')
+    const loginForm = ref(null);
 
-            } 
-            catch(error){
-                console.log(error.code)
-                switch(error.code){
-                    case "auth/invalid-email":
-                        errorMessage.value="Invalid email"
-                        break
-                    case "auth/user-not-found":
-                        errorMessage.value ="No account with this email was found"
-                        break
-                    case "auth/wrong-password":
-                        errorMessage.value="Incorrect password"
-                        break
-                }
-            } 
-        };
+    //rules for form validation
+    const rules = {
+      required: (value) => !!value || "This field is required",
+      validEmail: (value) => /.+@.+\..+/.test(value) || "Invalid email format"
+    };
 
-        const loginWithGoogle = async() =>{
-            try{
-                const result = await signInWithPopup(auth, googleProvider)
-                const token = await result.user.getIdToken()
-                localStorage.setItem("token", token)
+    const loginUser = async () => {
+      const isValid = await loginForm.value.validate()
 
-                alert("Login with google ")
-                console.log("Login with google")
+      if (!isValid) {
+        return
+      }
 
-                router.push('/dashboard')
+      try {
+        await store.dispatch("auth/login", { email: email.value, password: password.value })
+        router.push('/dashboard')
 
-            } catch(error){
-                console.error("Google sign-in error:", error);
-            }
-        }
+      }
+      catch (error) {
+        errorMessage.value = "Invalid credentials. Please try again."
+      }
+    };
 
-        // const loginWithFacebook = async() =>{
-        //     try{
-        //         const result = await signInWithPopup(auth, facebookProvider)
-        //         const token = await result.user.getIdToken()
-        //         localStorage.setItem("token", token)
+    const loginWithGoogle = async () => {
+      try {
+        await store.dispatch("auth/loginWithGoogle")
+        console.log("Login with google")
 
-        //         alert("Login with google ")
-        //         console.log("Login with facebook")
-        //     } catch(error){
-        //         console.error("Facebook sign-in error:", error);
-        //     }
-        // }
+        router.push('/dashboard')
 
-        return{email, password,loginUser, loginWithGoogle, errorMessage}
-        
+      } catch (error) {
+        console.error("Google sign-in error:", error)
+      }
     }
+
+
+    return { email, password, loginUser, loginWithGoogle, errorMessage, rules, loginForm }
+
+  }
 
 };
 </script>
