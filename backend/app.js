@@ -6,7 +6,7 @@ const express = require('express');
 const authenticate = require('./middlewares/authMiddleware');
 
 taskRouter = require('./routes/taskRouter')
-
+sessionRouter = require('./routes/sessionRouter')
 
 const app = express()
 
@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 
 //routes
 app.use('/api/tasks', authenticate, taskRouter);
-
+app.use('/api/sessions', authenticate, sessionRouter);
 
 const port = process.env.PORT
 app.listen(port, () =>

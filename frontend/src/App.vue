@@ -3,11 +3,11 @@
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>Productivity App</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn text to="/">Home</v-btn>
       <v-btn text to="/login" v-if="!isAuthenticated">Login</v-btn>
       <v-btn text to="/register" v-if="!isAuthenticated">Register</v-btn>
-      <v-btn text to="/dashboard" v-if="isAuthenticated">Dashboard</v-btn>
       <v-btn text to="/taskboard" v-if="isAuthenticated">Task Board</v-btn>
+      <v-btn text to="/focusSession" v-if="isAuthenticated">Focus Session</v-btn>
+      
 
       <v-btn v-if="isAuthenticated" color="secondary" @click="handleSignOut">Sign out</v-btn>
     </v-app-bar>
@@ -39,7 +39,7 @@ export default {
 
     const handleSignOut = async () => {
       await store.dispatch("auth/logout")
-      router.push("/")
+      router.push("/login")
     };
 
     return { isAuthenticated, handleSignOut };

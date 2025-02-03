@@ -3,28 +3,19 @@ import { auth } from '../config/firebase-config'
 import { onAuthStateChanged } from 'firebase/auth'
 
 //components here
-import Home from '../views/HomePage.vue'
 import LoginPage from '../views/LoginPage.vue'
 import MainPage from '../views/MainPage.vue'
 import RegisterPage from '@/views/RegisterPage.vue'
-import NotesTaskUI from '@/views/NotesTaskUI.vue'
 import TaskBoard from '@/components/TaskBoard.vue'
 
 
 const routes = [
-    { path: '/', name: 'Home', component: Home },
+    // { path: '/', name: 'Home', component: Home },
     { path: '/login', name: 'Login', component: LoginPage, meta: { requiresGuest: true } },
     { path: '/register', name: 'RegisterPage', component: RegisterPage, meta: { requiresGuest: true } },
     {
-        path: '/dashboard',
-        name: 'Dashboard', component: MainPage,
-        meta: {
-            requiresAuth: true
-        },
-    },
-    {
-        path: '/planner',
-        name: 'Planner', component: NotesTaskUI,
+        path: '/focusSession',
+        name: 'Focus Session', component: MainPage,
         meta: {
             requiresAuth: true
         },
@@ -69,7 +60,7 @@ router.beforeEach(async (to, from, next) => {
     } else if (to.matched.some((record) => record.meta.requiresGuest)) {
         const user = await getCurrentUser();
         if (user) {
-            next("/dashboard");
+            next("/taskboard");
         } else {
             next();
         }

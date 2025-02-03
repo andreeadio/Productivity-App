@@ -1,125 +1,158 @@
 <template>
   <v-card class="mt-8">
     <v-tabs @change="changeCurrentTimer" v-model="currentTimer" grow>
-      <v-tab
-        v-for="timer in timers"
-        :key="timer.name"
-      >
+      <v-tab v-for="timer in timers" :key="timer.name">
         {{ timer.name }}
       </v-tab>
     </v-tabs>
 
-    <v-card
-      class="pa-5 d-flex flex-column justify-center align-center"
-      flat
-    >
-      <h1 class="time">
-        {{ displayMinutes }}:{{ displaySeconds }}
-      </h1>
+    <v-card class="pa-5 d-flex flex-column justify-center align-center" flat>
+      <h1 class="time">{{ displayMinutes }}:{{ displaySeconds }}</h1>
 
       <div class="button-group">
-        <v-btn @click="start" color="primary">
+        <v-btn @click="start" color="primary" :disabled="isRunning">
           <v-icon left small>mdi-play-circle-outline</v-icon>
-          
         </v-btn>
         <v-btn @click="stop" color="error">
           <v-icon left small>mdi-stop-circle-outline</v-icon>
-          
         </v-btn>
         <v-btn @click="reset(timers[currentTimer].minutes)" :disabled="isRunning">
           <v-icon left small>mdi-restart</v-icon>
         </v-btn>
       </div>
     </v-card>
-
   </v-card>
 </template>
 
 <script>
-export default {
+import { ref, computed, watch } from "vue";
+import { useStore } from "vuex";
+import { getAuth } from "firebase/auth";
+import alarmSound from "@/assets/alarm.mp3";
 
-  data() {
-    return {
-      isRunning: false,
-      timerInstance: null,
-      totalSeconds: 25 * 60,
-      currentTimer: 0,
-      timers: [
-        {
-          name: 'Pomodoro',
-          minutes: 25
-        },
-        {
-          name: 'Short Break',
-          minutes: 5
-        },
-        {
-          name: 'Long Break',
-          minutes: 10
+export default {
+  setup() {
+    const store = useStore();
+    const auth = getAuth();
+    const isRunning = ref(false);
+    const timerInstance = ref(null);
+    const totalSeconds = ref(25 * 60);
+    const currentTimer = ref(0);
+    const timers = ref([
+      { name: "Pomodoro", minutes: 25, type: "focus" },
+      { name: "Short Break", minutes: 5, type: "break" },
+      { name: "Long Break", minutes: 10, type: "break" },
+    ]);
+
+    const displayMinutes = computed(() => {
+      return formatTime(Math.floor(totalSeconds.value / 60));
+    });
+
+    const displaySeconds = computed(() => {
+      return formatTime(totalSeconds.value % 60);
+    });
+
+    const formatTime = (time) => {
+      return time < 10 ? "0" + time : time.toString();
+    };
+
+    const start = () => {
+      stop();
+      isRunning.value = true;
+      timerInstance.value = setInterval(() => {
+        if (totalSeconds.value <= 0) {
+          stop();
+          playAlarm();
+          saveSession();
+          return;
         }
-      ]
-    }
-  },
-  computed: {
-    displayMinutes() {
-      const minutes = Math.floor(this.totalSeconds / 60)
-      return this.formatTime(minutes)
-    },
-    displaySeconds() {
-      const seconds = this.totalSeconds % 60
-      return this.formatTime(seconds)
-    }
-  },
-  methods: {
-    formatTime(time) {
-      if (time < 10) {
-        return '0' + time
-      }
-      return time.toString()
-    },
-    start() {
-      this.stop()
-      this.isRunning = true
-      this.timerInstance = setInterval(() => {
-        if (this.totalSeconds <= 0) {
-          this.stop()
-          return
-        }
-        this.totalSeconds -= 1
-      }, 1000)
-    },
-    stop() {
-      this.isRunning = false
-      clearInterval(this.timerInstance)
-    },
-    reset(minutes) {
-      this.stop()
-      this.totalSeconds = minutes * 60
-    },
-    changeCurrentTimer(num) {
-      this.currentTimer = num
-      this.reset(this.timers[num].minutes)
-    },
-    save(updatedTimers) {
-      this.timers = this.timers.map((timer, i) => {
-        return { ...timer, minutes: parseInt(updatedTimers[i]) }
-      })
-      this.totalSeconds = this.timers[this.currentTimer].minutes * 60;
-      //this.closeDialog()
+        totalSeconds.value -= 1;
+      }, 1000);
+    };
+
+    const stop = () => {
+      isRunning.value = false;
+      clearInterval(timerInstance.value);
+    };
+
+    const reset = (minutes) => {
+      saveSession();
+      stop();
+      totalSeconds.value = minutes * 60;
+    };
+
+    const changeCurrentTimer = (index) => {
+  console.log("changeCurrentTimer() called. Index:", index);
+
+  if (isRunning.value && totalSeconds.value < timers.value[currentTimer.value].minutes * 60) {
+    console.log("Calling saveSession() before switching timer...");
+    saveSession();
+  }
+
+  currentTimer.value = index;
+  reset(timers.value[index].minutes);
+};
+
+    
+    
+
+    const saveSession = async () => {
+  console.log("saveSession() called");
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("No authenticated user found.");
+    return;
+  }
+
+  if (totalSeconds.value < timers.value[currentTimer.value].minutes * 60) {
+    try {
+      console.log("Sending request to save session...");
+      await store.dispatch("sessions/saveSession", {
+        userId: user.userId,
+        type: timers.value[currentTimer.value].type,
+        duration: (timers.value[currentTimer.value].minutes * 60 - totalSeconds.value) / 60,
+        timestamp: new Date().toISOString(),
+      });
+      console.log("Session saved successfully");
+    } catch (error) {
+      console.error("Error saving session:", error);
     }
   }
+};
+
+    const playAlarm = () => {
+      new Audio(alarmSound).play();
+    };
+
+    watch(currentTimer, (newVal) => {
+      totalSeconds.value = timers.value[newVal].minutes * 60;
+    });
+
+    return {
+      isRunning,
+      totalSeconds,
+      currentTimer,
+      timers,
+      displayMinutes,
+      displaySeconds,
+      start,
+      stop,
+      reset,
+      changeCurrentTimer,
+      playAlarm,
+    };
+  },
 };
 </script>
 
 <style scoped>
-.pomodoro-timer {
-  text-align: center;
-  font-family: Arial, sans-serif;
+.time {
+  font-size: 3rem;
+  font-weight: bold;
 }
-button {
-  margin: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
+.button-group {
+  display: flex;
+  gap: 10px;
 }
 </style>
