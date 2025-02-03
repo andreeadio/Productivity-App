@@ -95,8 +95,19 @@ export default {
 };
 </script>
 
+
 <style scoped>
 .v-card {
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+}
+
+.v-btn {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.v-text-field {
+  border-radius: 10px;
 }
 </style>

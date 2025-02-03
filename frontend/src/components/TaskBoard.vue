@@ -227,9 +227,9 @@ export default {
   flex-grow: 1;
   overflow-y: auto;
   padding: 10px;
-  /* min-height: 500px; */
   height: 500px;
   max-height: 500px;
+  background-color: whitesmoke
 }
 
 
@@ -255,5 +255,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  background-color: lightblue;
 }
+
 </style>
