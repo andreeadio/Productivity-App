@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <h2>Task Board</h2>
-    <v-row>
+    <v-row class="kanban-container">
       <v-col v-for="status in statuses" :key="status" cols="12" md="3">
         <v-card class="kanban-column">
           <v-card-title>
@@ -14,27 +14,31 @@
 
           <v-progress-circular v-if="isLoading" indeterminate color="primary" class="mt-4"></v-progress-circular>
 
-          <v-list class="task-list" >
-            <v-list-item v-for="task in tasksByStatus(status)" :key="task.id">
-              <v-card class="pa-3 mb-3">
-                <v-card-title>{{ task.title }}</v-card-title>
-                <v-card-subtitle>{{ task.priority }} Priority</v-card-subtitle>
-                <v-card-text>
-                  <p>{{ task.description }}</p>
-                  <p>Due: {{ task.dueDate }}</p>
-                </v-card-text>
-                <v-btn color="warning" icon="mdi-pencil" text @click="openDialog(task)"></v-btn>
-                <v-btn color="red" icon="mdi-delete-outline" @click="openDeleteDialog(task)"></v-btn>
-              </v-card>
-            </v-list-item>
-          </v-list>
+          <draggable :list="tasksByStatus(status)" group="tasks" item-key="id" @start="onTaskStart" @end="onTaskDrop"
+            class="task-list">
+            <template v-slot:item="{ element: task }">
+              <v-list-item>
+                <v-card class="pa-3 mb-3">
+                  <v-card-title>{{ task.title }}</v-card-title>
+                  <v-card-subtitle>{{ task.priority }} Priority</v-card-subtitle>
+                  <v-card-text>
+                    <p>{{ task.description }}</p>
+                    <p>Due: {{ task.dueDate }}</p>
+                  </v-card-text>
+                  <v-btn color="warning" icon="mdi-pencil" text size="x-small" @click="openDialog(task)"></v-btn>
+                  <v-btn color="red" icon="mdi-delete-outline" size="x-small" @click="openDeleteDialog(task)"></v-btn>
+                </v-card>
+              </v-list-item>
+            </template>
+          </draggable>
 
           <p class="empty-message" v-if="tasksByStatus(status).length === 0">No tasks for {{ status }}</p>
         </v-card>
       </v-col>
     </v-row>
 
-    <TaskForm v-model="dialog" :task="editingTask" :isEdit="!!editingTask" @submit="handleTaskSubmit" @cancel="closeDialog" />
+    <TaskForm v-model="dialog" :task="editingTask" :isEdit="!!editingTask" @submit="handleTaskSubmit"
+      @cancel="closeDialog" />
 
     <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
@@ -52,43 +56,78 @@
 <script>
 import TaskForm from "./TaskForm.vue";
 import { ref, computed, onMounted } from "vue";
+import draggable from "vuedraggable";
 import { useStore } from "vuex";
 
 export default {
-  components: { TaskForm },
+  components: { TaskForm, draggable },
 
   setup() {
     const store = useStore();
-    const statuses = ["To Do", "In Progress", "Done", "Aborted"];
-    const dialog = ref(false);
-    const editingTask = ref(null);
-    const deleteDialog = ref(false);
-    const selectedTask = ref(null);
+    const statuses = ["To Do", "In Progress", "Done", "Aborted"]
+    const dialog = ref(false)
+    const editingTask = ref(null)
+    const deleteDialog = ref(false)
+    const selectedTask = ref(null)
+
+    const tasks = ref(
+      statuses.reduce((acc, status) => {
+        acc[status] = []
+        return acc
+      }, {})
+    )
+
+    const draggedTask = ref(null);
+    const previousStatus = ref(null);
 
     onMounted(() => {
-      statuses.forEach((status) => store.dispatch("tasks/fetchTasks", status));
+      statuses.forEach((status) => {
+        store.dispatch("tasks/fetchTasks", status).then(() => {
+          tasks.value[status] = store.getters["tasks/tasksByStatus"](status) || [];
+        });
+      });
     });
 
+    // onMounted(() => {
+    //   statuses.forEach((status) => store.dispatch("tasks/fetchTasks", status));
+    // });
+
+    // const tasksByStatus = computed({
+    //   get: () => (status) => store.getters["tasks/tasksByStatus"](status),
+    //   set: (status, tasks) => store.commit("tasks/SET_TASKS", { status, tasks }),
+    // });
     const tasksByStatus = computed(() => (status) => {
-      console.log("Filtering tasks for:", status, store.getters["tasks/tasksByStatus"](status));
-      return store.getters["tasks/tasksByStatus"](status);
+      //console.log("Filtering tasks for:", status, store.getters["tasks/tasksByStatus"](status));
+      return store.getters["tasks/tasksByStatus"](status) || []
     });
-    //const tasksByStatus = computed(() => (status) => store.getters["tasks/tasksByStatus"](status) || []);
-
-    // const tasksByStatus = (status) => {
-    //   return store.getters["tasks/tasksByStatus"](status) || [];
-    // };
 
     const isLoading = computed(() => store.getters["tasks/isLoading"]);
 
+
+
     const openDialog = (task) => {
       console.log("Opening dialog for task:", task);
-      editingTask.value = task ? { ...task } : null;
+
+      if (task) {
+        editingTask.value = { ...task }; 
+      } else {
+        editingTask.value = {
+          title: "",
+          description: "",
+          priority: "Medium",
+          dueDate: new Date().toISOString().split("T")[0],
+          status: "To Do"
+        };
+      }
+
       dialog.value = true;
     };
 
+
     const closeDialog = () => {
       dialog.value = false;
+      editingTask.value = null;
+
     };
 
     const handleTaskSubmit = async (task) => {
@@ -113,19 +152,61 @@ export default {
         selectedTask.value = null;
       }
     };
+    const updateTaskStatus = (task, newStatus) => {
+      if (task.status !== newStatus) {
+        task.status = newStatus;
+        store.dispatch("tasks/editTask", task);
+      }
+    };
 
-    return { statuses, isLoading, dialog, openDialog,closeDialog, handleTaskSubmit, confirmDelete, editingTask, tasksByStatus, deleteDialog, openDeleteDialog, selectedTask };
+    const onTaskStart = (event) => {
+      const task = event.item.__draggable_context?.element;
+      if (!task) return;
+
+      previousStatus.value = task.status
+      draggedTask.value = { ...task }
+    };
+
+    const onTaskDrop = async (event) => {
+      if (!event || !event.item || !event.to) return;
+
+      const column = event.to.closest(".kanban-column");
+      if (!column) return;
+
+      const newStatus = column.querySelector(".v-card-title")?.textContent?.trim();
+      if (!newStatus) return;
+
+      const task = event.item.__draggable_context?.element;
+      if (!task) return;
+
+      if (task.status === newStatus) return;
+
+      console.log(`Moving task ${task.id} from ${task.status} to ${newStatus}`);
+
+      await store.dispatch("tasks/editTask", { ...task, status: newStatus });
+
+      await store.dispatch("tasks/fetchTasks", task.status);
+      await store.dispatch("tasks/fetchTasks", newStatus);
+    };
+
+
+
+    return {
+      statuses, isLoading, dialog, openDialog, closeDialog, handleTaskSubmit,
+      confirmDelete, editingTask, deleteDialog, openDeleteDialog, selectedTask,
+      onTaskStart, onTaskDrop, updateTaskStatus, tasks, tasksByStatus
+    };
+
+
   },
 };
 </script>
 
 <style>
-
 .kanban-container {
   display: flex;
   align-items: stretch;
-  justify-content: center;
-  gap: 15px;
+  /* //justify-content: center; */
 }
 
 .kanban-column {
@@ -139,13 +220,16 @@ export default {
   background: #f5f5f5;
   border-radius: 10px;
   padding: 10px;
+  overflow: hidden;
 }
 
 .task-list {
   flex-grow: 1;
   overflow-y: auto;
   padding: 10px;
-  min-height: 500px; 
+  /* min-height: 500px; */
+  height: 500px;
+  max-height: 500px;
 }
 
 
@@ -162,10 +246,10 @@ export default {
   padding: 10px;
 }
 
-.v-list {
+/* .v-list {
   max-height: 500px; 
   overflow-y: auto; 
-}
+} */
 
 .v-card {
   display: flex;
@@ -173,4 +257,3 @@ export default {
   align-items: stretch;
 }
 </style>
-

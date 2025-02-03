@@ -14,9 +14,23 @@ const mutations = {
             state.tasks = [];
         }
 
-        state.tasks = state.tasks.filter(task => task.status !== status);
-        state.tasks = [...state.tasks, ...tasks];
+        state.tasks.forEach(task => {
+            const updatedTask = tasks.find(t => t.id === task.id);
+            if (updatedTask) {
+                task.status = updatedTask.status;
+            }
+        });
+
+        tasks.forEach(task => {
+            if (!state.tasks.some(t => t.id === task.id)) {
+                state.tasks.push(task);
+            }
+        });
+
+        // state.tasks = state.tasks.filter(task => task.status !== status);
+        // state.tasks = [...state.tasks, ...tasks];
     },
+
     ADD_TASK(state, task) {
         state.tasks.push(task);
     },
@@ -24,6 +38,14 @@ const mutations = {
         const index = state.tasks.findIndex(t => t.id === updatedTask.id);
         if (index !== -1) {
             state.tasks.splice(index, 1, updatedTask);
+        }
+    },
+    UPDATE_TASK_STATUS(state, { taskId, newStatus }) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if (task) {
+            task.status = newStatus;
+        } else {
+            state.tasks.push({ id: taskId, status: newStatus });
         }
     },
     DELETE_TASK(state, taskId) {
@@ -49,7 +71,9 @@ const actions = {
             });
 
             console.log(`Tasks found for status ${status}:`, response.data);
-            commit("SET_TASKS", { status, tasks: response.data });
+
+            const tasks = Array.isArray(response.data) ? response.data : [];
+            commit("SET_TASKS", { status, tasks });
 
         } catch (error) {
             console.error(`Error fetching tasks for ${status}:`, error);
@@ -83,6 +107,7 @@ const actions = {
             });
 
             commit('UPDATE_TASK', task);
+            commit("UPDATE_TASK_STATUS", { taskId: task.id, newStatus: task.status });
         } catch (error) {
             console.error("Error updating task:", error);
         }

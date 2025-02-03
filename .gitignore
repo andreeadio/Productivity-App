@@ -7,4 +7,4 @@ frontend/src/config/firebase-config
 frontend/jsconfig.json
 frontend/src/config/firebase-config.js
 backend/generateFakeData.js
-backend/testFirebase.js
+backend/testFirestore.js
