@@ -16,12 +16,17 @@
 
           <v-btn color="primary" block class="mt-4" @click="loginUser">Login</v-btn>
 
+          
           <v-divider class="my-4"></v-divider>
 
           <v-btn color="red darken-1" block @click="loginWithGoogle">
             <v-icon left>mdi-google</v-icon>
             Login with Google
           </v-btn>
+          <v-divider class="my-4"></v-divider>
+
+          <v-btn text to="/register" block class="mt-2">Don't have an account? Register</v-btn>
+
         </v-form>
       </v-card-text>
     </v-card>
@@ -62,7 +67,7 @@ export default {
 
       try {
         await store.dispatch("auth/login", { email: email.value, password: password.value })
-        router.push('/dashboard')
+        router.push('/taskboard')
 
       }
       catch (error) {
@@ -75,7 +80,7 @@ export default {
         await store.dispatch("auth/loginWithGoogle")
         console.log("Login with google")
 
-        router.push('/dashboard')
+        router.push('/taskboard')
 
       } catch (error) {
         console.error("Google sign-in error:", error)

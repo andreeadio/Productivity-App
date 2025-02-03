@@ -4,7 +4,7 @@
       <v-toolbar-title>Productivity App</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text to="/login" v-if="!isAuthenticated">Login</v-btn>
-      <v-btn text to="/register" v-if="!isAuthenticated">Register</v-btn>
+      <!-- <v-btn text to="/register" v-if="!isAuthenticated">Register</v-btn> -->
       <v-btn text to="/taskboard" v-if="isAuthenticated">Task Board</v-btn>
       <v-btn text to="/focusSession" v-if="isAuthenticated">Focus Session</v-btn>
       

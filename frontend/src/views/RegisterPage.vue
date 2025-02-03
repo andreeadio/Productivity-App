@@ -56,7 +56,7 @@ export default {
 
             try {
                 await store.dispatch("auth/register", { email: email.value, password: password.value })
-                router.push('/dashboard')
+                router.push('/taskboard')
             }
             catch (error) {
                 errorMessage.value = "Registration failed. Please try again."
@@ -68,7 +68,7 @@ export default {
         const registerWithGoogle = async () => {
             try {
                 await store.dispatch("auth/registerWithGoogle")
-                router.push("/dashboard")
+                router.push("/taskboard")
             } catch (error) {
                 errorMessage.value = "Google registration failed.";
                 console.error("Google sign-in error:", error)
